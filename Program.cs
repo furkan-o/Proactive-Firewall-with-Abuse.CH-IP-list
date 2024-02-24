@@ -9,14 +9,14 @@ class Program
     static void Main()
     {
         // Download File
-        string url = "https://urlhaus.abuse.ch/downloads/text_online/";
+        string url = "https://raw.githubusercontent.com/elliotwutingfeng/ThreatFox-IOC-IPs/main/ips.txt";
         string response;
         using (WebClient client = new WebClient())
         {
             response = client.DownloadString(url);
         }
 
-        // Remove the existing firewall rule if it exists
+        // Remove the existing firewall rule if it exists?
         string rule = "AbuseCH_IPs";
         if (FirewallRuleExists(rule))
         {
@@ -43,9 +43,9 @@ class Program
         foreach (string line in lines)
         {
             string[] parts = line.Split(',');
-            if (parts.Length >= 2 && IsValidIpAddress(parts[1]))
+            if (parts.Length >= 1 && IsValidIpAddress(parts[0]))
             {
-                ipAddresses.Add(parts[1]);
+                ipAddresses.Add(parts[0]);
             }
         }
 
@@ -60,7 +60,7 @@ class Program
 
     static string BlockIpAddress(string ip)
     {
-        string ruleName = $"AbuseCH_IPs";
+        string ruleName = $"AbuseCH_IPs_{ip.Replace(".", "_")}";
         string rule = $"netsh advfirewall firewall add rule name=\"{ruleName}\" dir=out action=block remoteip={ip}";
 
         using (Process process = new Process())
@@ -81,7 +81,7 @@ class Program
 
     static void DeleteFirewallRule(string ruleName)
     {
-        string rule = $"netsh advfirewall firewall delete rule name='{ruleName}'";
+        string rule = $"netsh advfirewall firewall delete rule name=\"{ruleName}\"";
 
         using (Process process = new Process())
         {
@@ -102,7 +102,7 @@ class Program
         using (Process process = new Process())
         {
             process.StartInfo.FileName = "netsh";
-            process.StartInfo.Arguments = $"advfirewall firewall show rule name={ruleName}";
+            process.StartInfo.Arguments = $"advfirewall firewall show rule name=\"{ruleName}\"";
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
