@@ -9,7 +9,7 @@ class Program
     static void Main()
     {
         // Download File
-        string url = "https://raw.githubusercontent.com/elliotwutingfeng/ThreatFox-IOC-IPs/main/ips.txt";
+        string url = "https://urlhaus.abuse.ch/downloads/text/";
         string response;
         using (WebClient client = new WebClient())
         {
