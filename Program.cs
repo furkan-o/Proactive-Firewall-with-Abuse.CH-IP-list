@@ -131,10 +131,12 @@ class Program
 
     static void RestartAsAdministrator()
     {
-        ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.FileName = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
-        startInfo.UseShellExecute = true;
-        startInfo.Verb = "runas"; // Run as administrator
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = System.Reflection.Assembly.GetExecutingAssembly().CodeBase,
+            UseShellExecute = true,
+            Verb = "runas" // Run as administrator
+        };
         Process.Start(startInfo);
     }
 }
