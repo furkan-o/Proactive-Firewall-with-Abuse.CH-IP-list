@@ -1,26 +1,33 @@
 ﻿using System;
-using System.IO;
-using System.Net;
 using System.Diagnostics;
+using System.Net;
+using System.Security.Principal;
 using System.Text.RegularExpressions;
 
 class Program
 {
     static void Main()
     {
+        // Check if running as administrator
+        if (!IsAdministrator())
+        {
+            // Restart program and request elevation
+            RestartAsAdministrator();
+            return;
+        }
+
         // Download File
-        string url = "https://raw.githubusercontent.com/elliotwutingfeng/ThreatFox-IOC-IPs/main/ips.txt";
+        string url = "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.txt";
         string response;
         using (WebClient client = new WebClient())
         {
             response = client.DownloadString(url);
         }
 
-        // Remove the existing firewall rule if it exists?
-        string rule = "AbuseCH_IPs";
-        if (FirewallRuleExists(rule))
+        // Remove the existing firewall rule if it exists
+        if (FirewallRuleExists("AbuseCH_IPs"))
         {
-            DeleteFirewallRule(rule);
+            DeleteFirewallRule("AbuseCH_IPs");
         }
 
         // Extract IP addresses
@@ -60,8 +67,7 @@ class Program
 
     static string BlockIpAddress(string ip)
     {
-        string ruleName = $"AbuseCH_IPs_{ip.Replace(".", "_")}";
-        string rule = $"netsh advfirewall firewall add rule name=\"{ruleName}\" dir=out action=block remoteip={ip}";
+        string rule = $"netsh advfirewall firewall add rule name=AbuseCH_IPs dir=out action=block remoteip={ip}";
 
         using (Process process = new Process())
         {
@@ -81,7 +87,7 @@ class Program
 
     static void DeleteFirewallRule(string ruleName)
     {
-        string rule = $"netsh advfirewall firewall delete rule name=\"{ruleName}\"";
+        string rule = $"netsh advfirewall firewall delete rule name=AbuseCH_IPs";
 
         using (Process process = new Process())
         {
@@ -102,7 +108,7 @@ class Program
         using (Process process = new Process())
         {
             process.StartInfo.FileName = "netsh";
-            process.StartInfo.Arguments = $"advfirewall firewall show rule name=\"{ruleName}\"";
+            process.StartInfo.Arguments = $"advfirewall firewall show rule name=AbuseCH_IPs";
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
@@ -114,5 +120,21 @@ class Program
 
             return !output.Contains("No rules match the specified criteria");
         }
+    }
+
+    static bool IsAdministrator()
+    {
+        WindowsIdentity identity = WindowsIdentity.GetCurrent();
+        WindowsPrincipal principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    static void RestartAsAdministrator()
+    {
+        ProcessStartInfo startInfo = new ProcessStartInfo();
+        startInfo.FileName = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
+        startInfo.UseShellExecute = true;
+        startInfo.Verb = "runas"; // Run as administrator
+        Process.Start(startInfo);
     }
 }
